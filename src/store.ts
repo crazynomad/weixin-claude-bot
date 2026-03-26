@@ -122,7 +122,7 @@ const DEFAULT_CONFIG: Required<BotConfig> = {
   maxTurns: 10,
   systemPrompt: "",
   cwd: process.cwd(),
-  permissionMode: "auto",
+  permissionMode: "bypassPermissions",
 };
 
 function configPath(): string {

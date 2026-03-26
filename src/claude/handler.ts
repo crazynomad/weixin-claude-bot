@@ -36,20 +36,33 @@ export async function askClaude(prompt: string, opts: ClaudeOptions): Promise<Cl
     },
   });
 
-  for await (const message of conversation) {
-    if (message.type === "assistant") {
-      for (const block of message.message.content) {
-        if (block.type === "text") {
-          texts.push(block.text);
+  try {
+    for await (const message of conversation) {
+      if (message.type === "assistant") {
+        for (const block of message.message.content) {
+          if (block.type === "text") {
+            texts.push(block.text);
+          }
         }
+      } else if (message.type === "result") {
+        if (message.subtype === "success" && message.result) {
+          texts.length = 0;
+          texts.push(message.result);
+        }
+        costUsd = message.total_cost_usd;
       }
-    } else if (message.type === "result") {
-      if (message.subtype === "success" && message.result) {
-        texts.length = 0;
-        texts.push(message.result);
-      }
-      costUsd = message.total_cost_usd;
     }
+  } catch (err) {
+    const msg = err instanceof Error ? err.message : String(err);
+    if (msg.includes("exited with code")) {
+      throw new Error(
+        `Claude Code 进程异常退出。可能原因：` +
+        `permissionMode "${opts.permissionMode}" 需要 Team 计划，` +
+        `或模型 "${opts.model}" 不可用。` +
+        `原始错误: ${msg}`,
+      );
+    }
+    throw err;
   }
 
   const text = texts.join("\n").trim() || "(Claude 没有返回文本内容)";
