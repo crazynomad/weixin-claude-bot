@@ -4,37 +4,25 @@
 
 iLink 的认证选择了最符合微信用户习惯的方式：**扫码登录**。
 
-```
-┌─────────────┐          ┌──────────────────┐          ┌──────────┐
-│  Bot 终端     │          │  iLink 服务器      │          │ 微信 App   │
-└──────┬──────┘          └────────┬─────────┘          └─────┬────┘
-       │                         │                           │
-       │  GET get_bot_qrcode     │                           │
-       │ ───────────────────────►│                           │
-       │                         │                           │
-       │  { qrcode, qrcode_img } │                           │
-       │ ◄───────────────────────│                           │
-       │                         │                           │
-       │  [终端显示二维码]         │                           │
-       │                         │                           │
-       │  GET get_qrcode_status  │                           │
-       │ ───────────────────────►│ (long-poll, 35s 超时)      │
-       │                         │                           │
-       │                         │       [用户扫码]           │
-       │                         │ ◄─────────────────────────│
-       │                         │                           │
-       │  { status: "scaned" }   │                           │
-       │ ◄───────────────────────│                           │
-       │                         │                           │
-       │  GET get_qrcode_status  │       [用户确认]           │
-       │ ───────────────────────►│ ◄─────────────────────────│
-       │                         │                           │
-       │  { status: "confirmed", │                           │
-       │    bot_token, bot_id,   │                           │
-       │    baseurl, user_id }   │                           │
-       │ ◄───────────────────────│                           │
-       │                         │                           │
-       │  [保存凭证到本地]         │                           │
+```mermaid
+sequenceDiagram
+    participant B as Bot 终端
+    participant S as iLink 服务器
+    participant W as 微信 App
+
+    B->>S: GET get_bot_qrcode
+    S-->>B: { qrcode, qrcode_img }
+    Note over B: 终端显示二维码
+
+    B->>S: GET get_qrcode_status (long-poll, 35s 超时)
+    W->>S: 用户扫码
+    S-->>B: { status: "scaned" }
+
+    B->>S: GET get_qrcode_status
+    W->>S: 用户确认
+    S-->>B: { status: "confirmed",<br/>bot_token, bot_id,<br/>baseurl, user_id }
+
+    Note over B: 保存凭证到本地
 ```
 
 ## 两个 HTTP 端点

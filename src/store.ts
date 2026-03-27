@@ -115,6 +115,8 @@ export type BotConfig = {
   cwd?: string;
   /** Permission mode for Claude Code tool execution */
   permissionMode?: PermissionMode;
+  /** Enable multi-turn conversation (resume previous session per user) */
+  multiTurn?: boolean;
 };
 
 const DEFAULT_CONFIG: Required<BotConfig> = {
@@ -123,6 +125,7 @@ const DEFAULT_CONFIG: Required<BotConfig> = {
   systemPrompt: "",
   cwd: process.cwd(),
   permissionMode: "bypassPermissions",
+  multiTurn: false,
 };
 
 function configPath(): string {
@@ -145,4 +148,37 @@ export function saveConfig(config: BotConfig): void {
   const merged = { ...existing, ...config };
   fs.writeFileSync(configPath(), JSON.stringify(merged, null, 2));
   console.log(`配置已保存到 ${configPath()}`);
+}
+
+// --- Session IDs (per-user, for multi-turn conversations) ---
+
+function sessionIdsPath(): string {
+  return path.join(STATE_DIR, "session-ids.json");
+}
+
+let sessionCache: Record<string, string> = {};
+
+export function loadSessionIds(): void {
+  try {
+    const raw = fs.readFileSync(sessionIdsPath(), "utf-8");
+    sessionCache = JSON.parse(raw) as Record<string, string>;
+  } catch {
+    sessionCache = {};
+  }
+}
+
+export function getSessionId(userId: string): string | undefined {
+  return sessionCache[userId];
+}
+
+export function setSessionId(userId: string, sessionId: string): void {
+  sessionCache[userId] = sessionId;
+  ensureDir(STATE_DIR);
+  fs.writeFileSync(sessionIdsPath(), JSON.stringify(sessionCache));
+}
+
+export function clearSessionId(userId: string): void {
+  delete sessionCache[userId];
+  ensureDir(STATE_DIR);
+  fs.writeFileSync(sessionIdsPath(), JSON.stringify(sessionCache));
 }

@@ -2,19 +2,22 @@
 
 ## 整体架构
 
+```mermaid
+graph LR
+    U["微信用户<br/>(手机/PC)"] <-->|"iLink HTTP<br/>5个端点"| B["weixin-claude-bot<br/>(Node.js 进程)"]
+    B <-->|"SDK subprocess<br/>query() API"| C["Claude Code<br/>(子进程)"]
+    B --> S["~/.weixin-claude-bot/"]
 ```
-┌──────────┐     iLink HTTP      ┌──────────────────┐    SDK subprocess    ┌────────────┐
-│  微信用户  │ ◄──────────────────► │  weixin-claude-bot │ ◄──────────────────► │ Claude Code │
-│ (手机/PC)  │    5个端点           │   (Node.js 进程)   │    query() API      │  (子进程)    │
-└──────────┘                     └──────────────────┘                      └────────────┘
-                                        │
-                                        ▼
-                                 ~/.weixin-claude-bot/
-                                 ├── credentials.json  (登录凭证)
-                                 ├── config.json       (模型/参数配置)
-                                 ├── sync-buf.txt      (消息游标)
-                                 └── context-tokens.json (会话令牌)
-```
+
+本地状态文件：
+
+| 文件 | 内容 |
+|------|------|
+| `credentials.json` | 登录凭证 |
+| `config.json` | 模型/参数配置 |
+| `sync-buf.txt` | 消息游标 |
+| `context-tokens.json` | 会话令牌 |
+| `session-ids.json` | 多轮对话 session |
 
 ## 消息流程（完整生命周期）
 
@@ -37,9 +40,10 @@
       │
       ▼
 5. 调用 Claude Agent SDK 的 query() 函数
+   - 多轮对话模式下，传入 resume: sessionId 接续上下文
    - 启动一个 Claude Code 子进程
    - Claude 可能执行多个 turn（读文件、搜索、写代码...）
-   - 收集最终结果文本
+   - 收集最终结果文本和 session_id
       │
       ▼
 6. 通过 sendmessage 将回复发回微信

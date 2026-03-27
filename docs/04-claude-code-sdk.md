@@ -56,6 +56,41 @@ for await (const message of conversation) {
 }
 ```
 
+## 多轮对话：resume 机制
+
+默认情况下，每条微信消息都是独立的 Claude 会话——Claude 不记得你上一条消息说了什么。开启多轮对话后，Bot 会用 SDK 的 `resume` 选项接续之前的会话：
+
+```typescript
+// 第一条消息：正常调用，获取 session_id
+const conv1 = query({ prompt: "帮我分析 src/index.ts", options: {} });
+// → 保存返回的 session_id
+
+// 第二条消息：传入 resume，Claude 记得上次的对话
+const conv2 = query({
+  prompt: "刚才那个文件的 handleMessage 能优化吗？",
+  options: { resume: sessionId },
+});
+```
+
+### 配置方式
+
+```bash
+npm run config -- --multi-turn true    # 开启
+npm run config -- --multi-turn false   # 关闭（默认）
+```
+
+开启后：
+- Bot 自动保存每个用户的 session ID 到 `~/.weixin-claude-bot/session-ids.json`
+- 后续消息自动带上 `resume: sessionId`，Claude 能看到完整对话历史
+- 发送 **"新对话"**、**"/reset"** 或 **"/clear"** 重置会话
+- 如果 resume 失败（session 过期），自动清除并开始新对话
+
+### 注意事项
+
+- 多轮对话会**累积 token 消耗**——Claude 每次都要重新读取之前的对话历史
+- session 不会自动过期，但 Claude Code 内部有上下文窗口限制，过长会自动压缩
+- 对于简单问答场景，关闭多轮对话更省钱
+
 ## maxTurns 详解
 
 一个 "turn" = Claude 思考一次 + 执行一个工具调用。

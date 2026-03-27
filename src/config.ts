@@ -8,6 +8,7 @@
  *   npm run config -- --max-turns 5                 # Set max turns
  *   npm run config -- --system-prompt "..."         # Set system prompt
  *   npm run config -- --cwd /path/to/dir            # Set working directory
+ *   npm run config -- --multi-turn true             # Enable multi-turn conversations
  */
 import { loadConfig, saveConfig, type PermissionMode } from "./store.js";
 
@@ -50,6 +51,7 @@ function printConfig() {
   console.log(`最大轮次 (--max-turns):         ${config.maxTurns}`);
   console.log(`工作目录 (--cwd):               ${config.cwd}`);
   console.log(`系统提示 (--system-prompt):     ${config.systemPrompt || "(无)"}`);
+  console.log(`多轮对话 (--multi-turn):        ${config.multiTurn ? "开启" : "关闭"}`);
   console.log(`\n可用模型: ${KNOWN_MODELS.join(", ")}`);
   console.log("\n模型别名（Claude Code 子进程解析）:");
   for (const { alias, desc } of MODEL_ALIASES) {
@@ -112,6 +114,15 @@ function main() {
       case "--cwd":
         if (!next) { console.error("--cwd 需要参数"); process.exit(1); }
         updates.cwd = next;
+        i++;
+        hasChanges = true;
+        break;
+      case "--multi-turn":
+        if (!next || (next !== "true" && next !== "false")) {
+          console.error("--multi-turn 需要参数 (true/false)");
+          process.exit(1);
+        }
+        updates.multiTurn = next === "true";
         i++;
         hasChanges = true;
         break;

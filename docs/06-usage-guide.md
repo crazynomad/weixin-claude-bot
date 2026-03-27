@@ -58,6 +58,9 @@ npm run config -- --model claude-haiku-4-5-20251001  # 最快
 npm run config -- --max-turns 5      # 简单对话
 npm run config -- --max-turns 20     # 需要操作文件
 
+# 开启多轮对话（Claude 记住上下文）
+npm run config -- --multi-turn true
+
 # 设置工作目录（Claude Code 操作文件的根目录）
 npm run config -- --cwd ~/Github/my-project
 
@@ -65,7 +68,7 @@ npm run config -- --cwd ~/Github/my-project
 npm run config -- --system-prompt "你是一个友好的编程助手，用简洁的中文回复"
 
 # 组合使用
-npm run config -- --model claude-haiku-4-5-20251001 --max-turns 5 --system-prompt "简短回答"
+npm run config -- --model claude-haiku-4-5-20251001 --max-turns 5 --multi-turn true
 ```
 
 配置保存在 `~/.weixin-claude-bot/config.json`
@@ -106,6 +109,20 @@ Bot: 你的 package.json 中有以下依赖：
      ...
 ```
 
+### 多轮对话（需要 --multi-turn true）
+```
+你: 帮我看看 package.json 有哪些依赖
+Bot: 你的 package.json 中有以下依赖：...
+
+你: 其中哪个是 AI 相关的？
+Bot: @anthropic-ai/claude-agent-sdk 是 AI 相关的，它是 Claude Agent SDK...
+
+你: 新对话
+Bot: 已开始新对话
+```
+
+发送 **"新对话"**、**"/reset"** 或 **"/clear"** 可重置会话，开始全新对话。
+
 ### 修改代码（需要 maxTurns ≥ 5）
 ```
 你: 在 src/index.ts 里加一个启动时打印版本号的功能
@@ -130,7 +147,8 @@ npm run login
 ├── credentials.json            # 登录凭证（bot_token 等）
 ├── config.json                 # 用户配置（模型、参数等）
 ├── sync-buf.txt                # 消息游标（断点续传）
-└── context-tokens.json         # 会话令牌（per-user）
+├── context-tokens.json         # 会话令牌（per-user）
+└── session-ids.json            # Claude 会话 ID（多轮对话）
 ```
 
 所有数据都在本地，没有上传到任何服务器。删除 `~/.weixin-claude-bot/` 目录即可完全清除。

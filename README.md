@@ -92,6 +92,10 @@ npm run config -- --model sonnet                   # 等同 claude-sonnet-4-6
 npm run config -- --model opus                     # 等同 claude-opus-4-6
 npm run config -- --model opusplan                 # 规划用 Opus，执行用 Sonnet
 
+# 开启多轮对话（记住上下文）
+npm run config -- --multi-turn true
+npm run config -- --multi-turn false                    # 关闭（默认）
+
 # 设置权限模式
 npm run config -- --permission-mode auto              # 推荐：后台安全检查（需 Team plan）
 npm run config -- --permission-mode bypassPermissions  # 无限制（仅限隔离环境）
@@ -119,6 +123,7 @@ npm start
 账号: df412faf283b@im.bot
 模型: claude-sonnet-4-6
 权限模式: auto
+多轮对话: 开启
 最大轮次: 10
 工作目录: /Users/you/Github/my-project
 等待消息中...
@@ -164,6 +169,7 @@ weixin-claude-bot/
 | `config.json` | Bot 配置（模型、参数） |
 | `sync-buf.txt` | 消息游标（断点续传） |
 | `context-tokens.json` | 会话令牌（per-user） |
+| `session-ids.json` | Claude 会话 ID（多轮对话用） |
 
 删除该目录即可完全清除所有数据。
 

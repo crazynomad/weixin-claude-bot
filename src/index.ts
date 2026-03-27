@@ -27,10 +27,15 @@ import {
   loadContextTokens,
   getContextToken,
   setContextToken,
+  loadSessionIds,
+  getSessionId,
+  setSessionId,
+  clearSessionId,
 } from "./store.js";
 
 const SESSION_EXPIRED_ERRCODE = -14;
 const SESSION_PAUSE_MS = 60 * 60 * 1000; // 1 hour
+const RESET_COMMANDS = new Set(["新对话", "/reset", "/clear"]);
 
 // --- Message text extraction ---
 
@@ -117,6 +122,7 @@ async function handleMessage(
   api: ApiOptions,
   msg: WeixinMessage,
   claudeOpts: ClaudeOptions,
+  multiTurn: boolean,
 ): Promise<void> {
   // Only process user messages
   if (msg.message_type !== MessageType.USER) return;
@@ -142,20 +148,42 @@ async function handleMessage(
 
   console.log(`\n📩 收到消息 from ${fromUser}: ${text.substring(0, 80)}${text.length > 80 ? "..." : ""}`);
 
+  // Handle reset commands (multi-turn only)
+  if (multiTurn && RESET_COMMANDS.has(text.trim())) {
+    clearSessionId(fromUser);
+    await sendTextReply(api, fromUser, contextToken, "已开始新对话");
+    console.log(`  🔄 已重置 ${fromUser} 的会话`);
+    return;
+  }
+
   // Show typing indicator
   showTyping(api, fromUser, contextToken);
 
+  // Attach session ID for multi-turn conversations
+  const callOpts = multiTurn
+    ? { ...claudeOpts, sessionId: getSessionId(fromUser) }
+    : claudeOpts;
+
   try {
     // Send to Claude Code
-    console.log(`  🤖 正在调用 Claude Code (${claudeOpts.model})...`);
-    const response = await askClaude(text, claudeOpts);
+    console.log(`  🤖 正在调用 Claude Code (${callOpts.model})...`);
+    const response = await askClaude(text, callOpts);
     console.log(`  ✅ Claude 响应完成 (${(response.durationMs / 1000).toFixed(1)}s)`);
+
+    // Save session ID for next turn
+    if (multiTurn && response.sessionId) {
+      setSessionId(fromUser, response.sessionId);
+    }
 
     // Send response back to WeChat
     await sendTextReply(api, fromUser, contextToken, response.text);
     console.log(`  📤 已发送回复 (${response.text.length} chars)`);
   } catch (err) {
     console.error(`  ❌ 处理失败:`, err);
+    // If resume failed, clear session and let user retry
+    if (multiTurn) {
+      clearSessionId(fromUser);
+    }
     // Send error message back to user
     await sendTextReply(
       api,
@@ -196,11 +224,13 @@ async function main() {
   console.log(`权限模式: ${config.permissionMode}`);
   console.log(`最大轮次: ${config.maxTurns}`);
   console.log(`工作目录: ${config.cwd}`);
+  console.log(`多轮对话: ${config.multiTurn ? "开启" : "关闭"}`);
   if (config.systemPrompt) console.log(`系统提示: ${config.systemPrompt.substring(0, 60)}...`);
   console.log("等待消息中...\n");
 
   // Restore state
   loadContextTokens();
+  loadSessionIds();
   let syncBuf = loadSyncBuf();
 
   // Graceful shutdown
@@ -250,7 +280,7 @@ async function main() {
       // Process messages
       const msgs = resp.msgs ?? [];
       for (const msg of msgs) {
-        await handleMessage(api, msg, claudeOpts);
+        await handleMessage(api, msg, claudeOpts, config.multiTurn);
       }
     } catch (err) {
       consecutiveFailures++;

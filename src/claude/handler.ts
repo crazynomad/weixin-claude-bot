@@ -10,9 +10,12 @@ export type ClaudeResponse = {
   text: string;
   durationMs: number;
   costUsd?: number;
+  sessionId?: string;
 };
 
-export type ClaudeOptions = Pick<Required<BotConfig>, "model" | "maxTurns" | "systemPrompt" | "cwd" | "permissionMode">;
+export type ClaudeOptions = Pick<Required<BotConfig>, "model" | "maxTurns" | "systemPrompt" | "cwd" | "permissionMode"> & {
+  sessionId?: string;
+};
 
 /**
  * Send a prompt to Claude Code and collect the text response.
@@ -22,6 +25,7 @@ export async function askClaude(prompt: string, opts: ClaudeOptions): Promise<Cl
   const start = Date.now();
   const texts: string[] = [];
   let costUsd: number | undefined;
+  let sessionId: string | undefined;
 
   const conversation = query({
     prompt,
@@ -33,11 +37,15 @@ export async function askClaude(prompt: string, opts: ClaudeOptions): Promise<Cl
       // but the runtime supports them.
       permissionMode: opts.permissionMode as Options["permissionMode"],
       ...(opts.systemPrompt ? { appendSystemPrompt: opts.systemPrompt } : {}),
+      ...(opts.sessionId ? { resume: opts.sessionId } : {}),
     },
   });
 
   try {
     for await (const message of conversation) {
+      if ("session_id" in message && message.session_id && !sessionId) {
+        sessionId = message.session_id;
+      }
       if (message.type === "assistant") {
         for (const block of message.message.content) {
           if (block.type === "text") {
@@ -71,5 +79,6 @@ export async function askClaude(prompt: string, opts: ClaudeOptions): Promise<Cl
     text,
     durationMs: Date.now() - start,
     costUsd,
+    sessionId,
   };
 }
