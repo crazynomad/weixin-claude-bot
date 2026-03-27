@@ -10,7 +10,7 @@
     "config": "node --import tsx src/config.ts"
   },
   "dependencies": {
-    "@anthropic-ai/claude-code": "^1.0.128",
+    "@anthropic-ai/claude-agent-sdk": "^0.2.0",
     "qrcode-terminal": "^0.12.0"
   },
   "devDependencies": {

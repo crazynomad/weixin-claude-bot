@@ -77,31 +77,31 @@ const msg = {
 
 ---
 
-## 坑 3：Claude Code SDK 的导出名不叫 "claude"
+## 坑 3：Claude Agent SDK 的导出名不叫 "claude"
 
 ### 现象
 ```
-error TS2305: Module '"@anthropic-ai/claude-code"' has no exported member 'claude'.
+error TS2305: Module '"@anthropic-ai/claude-agent-sdk"' has no exported member 'claude'.
 ```
 
 ### 原因
 很多教程和示例会写：
 ```typescript
 // ❌ 错误 — 没有这个导出
-import { claude } from "@anthropic-ai/claude-code";
+import { claude } from "@anthropic-ai/claude-agent-sdk";
 ```
 
 实际导出是：
 ```typescript
 // ✅ 正确
-import { query } from "@anthropic-ai/claude-code";
+import { query } from "@anthropic-ai/claude-agent-sdk";
 ```
 
 SDK 一共只导出 3 个东西：`query`、`tool`、`createSdkMcpServer`。
 
 ### 如何发现的
 ```bash
-node -e "const m = require('@anthropic-ai/claude-code'); console.log(Object.keys(m))"
+node -e "const m = require('@anthropic-ai/claude-agent-sdk'); console.log(Object.keys(m))"
 # 输出: query, tool, createSdkMcpServer
 ```
 
@@ -131,7 +131,7 @@ for await (const message of conversation) {
 ```
 
 ### 教训
-Claude Code SDK 设计为流式输出（因为 agentic 执行可能很长），所以用了 AsyncGenerator。如果只需要最终结果，仍然需要遍历完整个 generator。
+Claude Agent SDK 设计为流式输出（因为 agentic 执行可能很长），所以用了 AsyncGenerator。如果只需要最终结果，仍然需要遍历完整个 generator。
 
 ---
 

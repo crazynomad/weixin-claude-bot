@@ -131,7 +131,7 @@ npm run config -- --permission-mode bypassPermissions
 
 ### 代码实现
 
-`handler.ts` 中将配置的权限模式传给 Claude Code SDK：
+`handler.ts` 中将配置的权限模式传给 Claude Agent SDK：
 
 ```typescript
 const conversation = query({

@@ -3,7 +3,7 @@
 通过微信消息远程操控 Claude Code —— 基于腾讯 iLink 协议的微信 AI Bot。
 
 ```
-微信用户 ──► iLink 协议 ──► weixin-claude-bot ──► Claude Code SDK ──► 本地文件系统
+微信用户 ──► iLink 协议 ──► weixin-claude-bot ──► Claude Agent SDK ──► 本地文件系统
    ◄────────────────────────────────────────────────────────────────────────┘
 ```
 
@@ -31,7 +31,7 @@ nvm install 18
 ### 安装 Claude Code
 
 ```bash
-npm install -g @anthropic-ai/claude-code
+npm install -g @anthropic-ai/claude-agent-sdk
 claude  # 首次运行会引导登录 Anthropic 账号
 ```
 
@@ -49,7 +49,7 @@ npm install
 
 | 包名 | 用途 |
 |------|------|
-| `@anthropic-ai/claude-code` | Claude Code SDK，通过子进程调用 Claude Code 的 agentic 能力 |
+| `@anthropic-ai/claude-agent-sdk` | Claude Agent SDK，通过子进程调用 Claude Code 的 agentic 能力 |
 | `qrcode-terminal` | 在终端显示微信登录二维码 |
 
 **开发依赖：**
@@ -134,13 +134,13 @@ weixin-claude-bot/
 │   │   ├── api.ts           # 5 个 HTTP API 封装
 │   │   └── auth.ts          # QR 登录流程
 │   └── claude/
-│       └── handler.ts       # Claude Code SDK 集成
+│       └── handler.ts       # Claude Agent SDK 集成
 ├── docs/                    # 教学文档
 │   ├── 00-overview.md       # 文档总览
 │   ├── 01-ilink-protocol.md # iLink 协议解析
 │   ├── 02-architecture.md   # 架构设计与决策
 │   ├── 03-qr-login.md       # QR 登录流程
-│   ├── 04-claude-code-sdk.md# Claude Code SDK 详解
+│   ├── 04-claude-code-sdk.md# Claude Agent SDK 详解
 │   ├── 05-pitfalls.md       # 踩坑记录
 │   ├── 06-usage-guide.md    # 使用指南
 │   └── 07-openclaw-analysis.md # OpenClaw 源码分析

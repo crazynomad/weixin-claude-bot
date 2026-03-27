@@ -14,7 +14,7 @@ npm install
 ```
 
 依赖很少：
-- `@anthropic-ai/claude-code` — Claude Code SDK
+- `@anthropic-ai/claude-agent-sdk` — Claude Agent SDK
 - `qrcode-terminal` — 终端显示二维码
 - `tsx` / `typescript` — 开发工具
 
@@ -101,7 +101,7 @@ Bot: TypeScript 是 JavaScript 的超集，添加了静态类型系统...
 ```
 你: 帮我看看 package.json 有哪些依赖
 Bot: 你的 package.json 中有以下依赖：
-     - @anthropic-ai/claude-code: ^1
+     - @anthropic-ai/claude-agent-sdk: ^0.2
      - qrcode-terminal: ^0.12.0
      ...
 ```

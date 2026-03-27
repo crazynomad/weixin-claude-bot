@@ -1,23 +1,23 @@
-# 04 — Claude Code SDK：不只是 API 调用
+# 04 — Claude Agent SDK：不只是 API 调用
 
 ## Claude Code vs Claude API
 
 很多人会混淆这两者：
 
-| | Claude API | Claude Code SDK |
+| | Claude API | Claude Agent SDK |
 |---|---|---|
 | 是什么 | 纯 LLM 对话接口 | **Agentic 编程助手** |
 | 能做什么 | 发文本、收文本 | 读写文件、执行命令、搜索代码、Git 操作... |
 | 适合场景 | 聊天机器人 | 远程操控开发环境 |
-| npm 包 | `@anthropic-ai/sdk` | `@anthropic-ai/claude-code` |
+| npm 包 | `@anthropic-ai/sdk` | `@anthropic-ai/claude-agent-sdk` |
 | 调用方式 | `messages.create()` | `query()` — 异步生成器 |
 
-我们选择 Claude Code SDK 而非纯 API，因为这样微信 Bot 就拥有了**操控本地文件系统和终端的能力**。你可以在地铁上通过微信让 Bot 帮你改代码。
+我们选择 Claude Agent SDK 而非纯 API，因为这样微信 Bot 就拥有了**操控本地文件系统和终端的能力**。你可以在地铁上通过微信让 Bot 帮你改代码。
 
 ## SDK 核心：query() 函数
 
 ```typescript
-import { query } from "@anthropic-ai/claude-code";
+import { query } from "@anthropic-ai/claude-agent-sdk";
 
 const conversation = query({
   prompt: "帮我看看 package.json 里有哪些 scripts",
@@ -162,7 +162,7 @@ npm run config -- --permission-mode bypassPermissions
 
 ## model 选择
 
-Claude Code SDK 支持所有 Claude 模型：
+Claude Agent SDK 支持所有 Claude 模型：
 
 ### 最新模型（推荐）
 

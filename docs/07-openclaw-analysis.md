@@ -724,7 +724,7 @@ CDN 上传地址:                         2 = VIDEO
 
 我们的 weixin-claude-bot 实现了其中最核心的一条通路:
 
-  WeChat ──► iLink API ──► Claude Code SDK ──► 本地文件系统 ──► 回复
+  WeChat ──► iLink API ──► Claude Agent SDK ──► 本地文件系统 ──► 回复
 
-不需要 Gateway 层 (单用户), 不需要 Provider 层 (只用 Claude Code SDK).
+不需要 Gateway 层 (单用户), 不需要 Provider 层 (只用 Claude Agent SDK).
 ```

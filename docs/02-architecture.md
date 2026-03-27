@@ -36,7 +36,7 @@
    - 再调 sendtyping 发送状态
       │
       ▼
-5. 调用 Claude Code SDK 的 query() 函数
+5. 调用 Claude Agent SDK 的 query() 函数
    - 启动一个 Claude Code 子进程
    - Claude 可能执行多个 turn（读文件、搜索、写代码...）
    - 收集最终结果文本
@@ -77,7 +77,7 @@ weixin-claude-bot/
 │   │   ├── api.ts           # 5 个 HTTP API 封装
 │   │   └── auth.ts          # QR 扫码登录流程
 │   └── claude/
-│       └── handler.ts       # Claude Code SDK 调用封装
+│       └── handler.ts       # Claude Agent SDK 调用封装
 ```
 
 ## 设计决策记录

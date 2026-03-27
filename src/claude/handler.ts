@@ -2,9 +2,9 @@
  * Claude Code SDK integration.
  * Processes WeChat messages through Claude Code and returns text responses.
  */
-import { query } from "@anthropic-ai/claude-code";
+import { query } from "@anthropic-ai/claude-agent-sdk";
 import type { BotConfig, PermissionMode } from "../store.js";
-import type { Options } from "@anthropic-ai/claude-code";
+import type { Options } from "@anthropic-ai/claude-agent-sdk";
 
 export type ClaudeResponse = {
   text: string;
