@@ -1,23 +1,14 @@
 /**
  * weixin-claude-bot — Bridge WeChat messages to Claude Code via iLink protocol.
  *
- * Flow: WeChat → iLink getupdates → Claude Code SDK → iLink sendmessage → WeChat
+ * Flow: WeChat → ILinkClient.poll() → Claude Code SDK → ILinkClient.sendTextChunked() → WeChat
  */
-import crypto from "node:crypto";
 import {
-  getUpdates,
-  sendMessage,
-  sendTyping,
-  getConfig,
-  type ApiOptions,
-} from "./ilink/api.js";
-import {
+  ILinkClient,
   MessageType,
   MessageItemType,
-  MessageState,
-  TypingStatus,
   type WeixinMessage,
-} from "./ilink/types.js";
+} from "weixin-ilink";
 import { askClaude, type ClaudeOptions } from "./claude/handler.js";
 import {
   loadCredentials,
@@ -57,69 +48,10 @@ function extractText(msg: WeixinMessage): string {
   return "";
 }
 
-// --- Send text reply (split into chunks if needed) ---
-
-const MAX_MSG_LEN = 4000; // WeChat has a ~4096 limit, leave some margin
-
-function generateClientId(): string {
-  return `wcb-${Date.now()}-${crypto.randomBytes(4).toString("hex")}`;
-}
-
-async function sendTextReply(
-  api: ApiOptions,
-  toUserId: string,
-  contextToken: string,
-  text: string,
-): Promise<void> {
-  const chunks =
-    text.length <= MAX_MSG_LEN
-      ? [text]
-      : text.match(new RegExp(`.{1,${MAX_MSG_LEN}}`, "gs")) || [text];
-
-  for (const chunk of chunks) {
-    const msg: WeixinMessage = {
-      to_user_id: toUserId,
-      from_user_id: "",          // iLink server fills this automatically
-      client_id: generateClientId(), // unique per message, prevents dedup
-      message_type: MessageType.BOT,
-      message_state: MessageState.FINISH,
-      context_token: contextToken,
-      item_list: [
-        {
-          type: MessageItemType.TEXT,
-          text_item: { text: chunk },
-        },
-      ],
-    };
-    await sendMessage(api, { msg });
-  }
-}
-
-// --- Typing indicator ---
-
-async function showTyping(
-  api: ApiOptions,
-  userId: string,
-  contextToken?: string,
-): Promise<void> {
-  try {
-    const config = await getConfig(api, userId, contextToken);
-    if (config.typing_ticket) {
-      await sendTyping(api, {
-        ilink_user_id: userId,
-        typing_ticket: config.typing_ticket,
-        status: TypingStatus.TYPING,
-      });
-    }
-  } catch {
-    // Non-critical, ignore errors
-  }
-}
-
 // --- Process a single inbound message ---
 
 async function handleMessage(
-  api: ApiOptions,
+  client: ILinkClient,
   msg: WeixinMessage,
   claudeOpts: ClaudeOptions,
   multiTurn: boolean,
@@ -151,13 +83,13 @@ async function handleMessage(
   // Handle reset commands (multi-turn only)
   if (multiTurn && RESET_COMMANDS.has(text.trim())) {
     clearSessionId(fromUser);
-    await sendTextReply(api, fromUser, contextToken, "已开始新对话");
+    await client.sendText(fromUser, "已开始新对话", contextToken);
     console.log(`  🔄 已重置 ${fromUser} 的会话`);
     return;
   }
 
-  // Show typing indicator
-  showTyping(api, fromUser, contextToken);
+  // Show typing indicator (non-blocking, non-critical)
+  client.sendTyping(fromUser, contextToken).catch(() => {});
 
   // Attach session ID for multi-turn conversations
   const callOpts = multiTurn
@@ -176,8 +108,8 @@ async function handleMessage(
     }
 
     // Send response back to WeChat
-    await sendTextReply(api, fromUser, contextToken, response.text);
-    console.log(`  📤 已发送回复 (${response.text.length} chars)`);
+    const chunks = await client.sendTextChunked(fromUser, response.text, contextToken);
+    console.log(`  📤 已发送回复 (${response.text.length} chars, ${chunks} 条消息)`);
   } catch (err) {
     console.error(`  ❌ 处理失败:`, err);
     // If resume failed, clear session and let user retry
@@ -185,11 +117,10 @@ async function handleMessage(
       clearSessionId(fromUser);
     }
     // Send error message back to user
-    await sendTextReply(
-      api,
+    await client.sendText(
       fromUser,
-      contextToken,
       `处理消息时出错: ${err instanceof Error ? err.message : String(err)}`,
+      contextToken,
     ).catch(() => {});
   }
 }
@@ -203,10 +134,13 @@ async function main() {
     process.exit(1);
   }
 
-  const api: ApiOptions = {
+  const client = new ILinkClient({
     baseUrl: creds.baseUrl,
     token: creds.botToken,
-  };
+  });
+
+  // Restore sync cursor
+  client.cursor = loadSyncBuf();
 
   const config = loadConfig();
   const claudeOpts: ClaudeOptions = {
@@ -231,7 +165,6 @@ async function main() {
   // Restore state
   loadContextTokens();
   loadSessionIds();
-  let syncBuf = loadSyncBuf();
 
   // Graceful shutdown
   process.on("SIGINT", () => {
@@ -244,7 +177,7 @@ async function main() {
 
   while (true) {
     try {
-      const resp = await getUpdates(api, { get_updates_buf: syncBuf });
+      const resp = await client.poll();
 
       // Handle errors
       if ((resp.ret && resp.ret !== 0) || (resp.errcode && resp.errcode !== 0)) {
@@ -271,16 +204,13 @@ async function main() {
 
       consecutiveFailures = 0;
 
-      // Save sync cursor
-      if (resp.get_updates_buf) {
-        saveSyncBuf(resp.get_updates_buf);
-        syncBuf = resp.get_updates_buf;
-      }
+      // Persist sync cursor
+      saveSyncBuf(client.cursor);
 
       // Process messages
       const msgs = resp.msgs ?? [];
       for (const msg of msgs) {
-        await handleMessage(api, msg, claudeOpts, config.multiTurn);
+        await handleMessage(client, msg, claudeOpts, config.multiTurn);
       }
     } catch (err) {
       consecutiveFailures++;

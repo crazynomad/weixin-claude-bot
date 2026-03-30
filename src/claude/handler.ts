@@ -36,6 +36,7 @@ export async function askClaude(prompt: string, opts: ClaudeOptions): Promise<Cl
       // Cast needed: SDK types haven't added "auto" and "dontAsk" yet,
       // but the runtime supports them.
       permissionMode: opts.permissionMode as Options["permissionMode"],
+      pathToClaudeCodeExecutable: "claude",
       ...(opts.systemPrompt ? { appendSystemPrompt: opts.systemPrompt } : {}),
       ...(opts.sessionId ? { resume: opts.sessionId } : {}),
     },
