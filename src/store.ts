@@ -125,7 +125,7 @@ const DEFAULT_CONFIG: Required<BotConfig> = {
   systemPrompt: "",
   cwd: process.cwd(),
   permissionMode: "bypassPermissions",
-  multiTurn: false,
+  multiTurn: true,
 };
 
 function configPath(): string {

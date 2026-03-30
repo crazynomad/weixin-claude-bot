@@ -56,6 +56,7 @@ npm install
 | 包名 | 用途 |
 |------|------|
 | `@anthropic-ai/claude-agent-sdk` | Claude Agent SDK，通过子进程调用 Claude Code 的 agentic 能力 |
+| [`weixin-ilink`](https://github.com/crazynomad/weixin-ilink) | 轻量 iLink 协议 SDK — QR 登录、消息收发、媒体上传，零运行时依赖 |
 | `qrcode-terminal` | 在终端显示微信登录二维码 |
 
 **开发依赖：**
@@ -92,9 +93,9 @@ npm run config -- --model sonnet                   # 等同 claude-sonnet-4-6
 npm run config -- --model opus                     # 等同 claude-opus-4-6
 npm run config -- --model opusplan                 # 规划用 Opus，执行用 Sonnet
 
-# 开启多轮对话（记住上下文）
-npm run config -- --multi-turn true
-npm run config -- --multi-turn false                    # 关闭（默认）
+# 多轮对话（默认开启，记住上下文）
+npm run config -- --multi-turn false                    # 关闭
+npm run config -- --multi-turn true                     # 开启（默认）
 
 # 设置权限模式
 npm run config -- --permission-mode auto              # 推荐：后台安全检查（需 Team plan）
@@ -140,10 +141,6 @@ weixin-claude-bot/
 │   ├── login.ts             # QR 扫码登录
 │   ├── config.ts            # 配置管理 CLI
 │   ├── store.ts             # 状态持久化
-│   ├── ilink/
-│   │   ├── types.ts         # iLink 协议类型
-│   │   ├── api.ts           # 5 个 HTTP API 封装
-│   │   └── auth.ts          # QR 登录流程
 │   └── claude/
 │       └── handler.ts       # Claude Agent SDK 集成
 ├── docs/                    # 教学文档
@@ -158,6 +155,8 @@ weixin-claude-bot/
 ├── package.json
 └── tsconfig.json
 ```
+
+> iLink 协议层已抽离为独立 SDK [`weixin-ilink`](https://github.com/crazynomad/weixin-ilink)。如果你想基于 iLink 协议构建自己的微信 Bot（对接其他 AI、自定义业务逻辑等），可以直接使用该包，无需依赖本项目。
 
 ## 本地数据
 
@@ -181,7 +180,7 @@ weixin-claude-bot/
 
 ## 背景
 
-本项目基于对 `@tencent-weixin/openclaw-weixin` npm 包（MIT License）的源码分析构建。该包实现了 iLink Bot 协议，让第三方开发者能通过标准 HTTP 与微信交互。
+本项目基于对 `@tencent-weixin/openclaw-weixin` npm 包（MIT License）的源码分析构建。该包实现了 iLink Bot 协议，让第三方开发者能通过标准 HTTP 与微信交互。iLink 协议通讯层已独立封装为 [`weixin-ilink`](https://github.com/crazynomad/weixin-ilink) SDK。
 
 详细的协议分析和构建过程记录在 [docs/](docs/00-overview.md) 目录中。
 
